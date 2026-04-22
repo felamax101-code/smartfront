@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NameLab — What Does Your Name Say About You?</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5f0;
+  --white: #ffffff;
+  --dark: #1a1814;
+  --dark2: #2e2b26;
+  --ink: #3d3a34;
+  --muted: #8a8680;
+  --line: #e2ddd6;
+  --gold: #c9a84c;
+  --gold-light: #f5e9c8;
+  --gold-dark: #9a7530;
+  --red: #c0392b;
+  --green: #1e6e4a;
+  --blue: #1a3a5c;
+  --radius: 12px;
+  --shadow: 0 2px 16px rgba(26,24,20,0.08);
+  --shadow-lg: 0 8px 40px rgba(26,24,20,0.14);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--ink); font-family:'DM Sans',sans-serif; min-height:100vh; line-height:1.6; }
+
+nav {
+  background:var(--dark); padding:0 2rem;
+  display:flex; align-items:center; justify-content:space-between;
+  height:60px; position:sticky; top:0; z-index:100;
+  box-shadow:0 2px 12px rgba(0,0,0,0.3);
+}
+.nav-logo { font-family:'DM Serif Display',serif; font-size:1.5rem; color:var(--gold); }
+.nav-logo span { color:#fff; font-style:italic; }
+.nav-tag { font-size:0.72rem; color:#5a5752; letter-spacing:0.12em; text-transform:uppercase; }
+
+.hero {
+  background:var(--dark); padding:3.5rem 2rem 3rem;
+  text-align:center; position:relative; overflow:hidden;
+}
+.hero::before {
+  content:''; position:absolute; inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(201,168,76,0.06) 39px,rgba(201,168,76,0.06) 40px),
+              repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(201,168,76,0.06) 39px,rgba(201,168,76,0.06) 40px);
+  pointer-events:none;
+}
+.hero-badge {
+  display:inline-block; background:rgba(201,168,76,0.12);
+  border:1px solid rgba(201,168,76,0.3); color:var(--gold);
+  font-size:0.72rem; font-weight:600; letter-spacing:0.18em;
+  text-transform:uppercase; padding:0.35rem 1rem;
+  border-radius:999px; margin-bottom:1.2rem;
+}
+.hero h1 { font-family:'DM Serif Display',serif; font-size:clamp(2.2rem,6vw,3.8rem); color:#fff; line-height:1.15; margin-bottom:1rem; }
+.hero h1 em { color:var(--gold); font-style:italic; }
+.hero p { font-size:1rem; color:#a09d98; max-width:480px; margin:0 auto 2rem; font-weight:300; }
+.hero-stats { display:flex; gap:2.5rem; justify-content:center; flex-wrap:wrap; }
+.stat-num { font-family:'DM Serif Display',serif; font-size:1.8rem; color:var(--gold); display:block; line-height:1; }
+.stat-label { font-size:0.7rem; color:#5a5752; letter-spacing:0.1em; text-transform:uppercase; margin-top:0.2rem; }
+
+
+
+.section-wrap { max-width:760px; margin:0 auto; padding:2rem 1.5rem 0.8rem; }
+.section-wrap h2 { font-family:'DM Serif Display',serif; font-size:1.4rem; color:var(--dark); }
+.section-wrap p { font-size:0.82rem; color:var(--muted); margin-top:0.2rem; }
+
+.tools-grid {
+  max-width:760px; margin:0 auto; padding:0 1.5rem 3rem;
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem;
+}
+.tool-card-home {
+  background:var(--white); border:1px solid var(--line);
+  border-radius:var(--radius); padding:1.4rem 1.2rem;
+  cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden;
+}
+.tool-card-home::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:3px;
+  background:var(--gold); transform:scaleX(0); transition:transform 0.2s; transform-origin:left;
+}
+.tool-card-home:hover { box-shadow:var(--shadow-lg); border-color:var(--gold); transform:translateY(-2px); }
+.tool-card-home:hover::after { transform:scaleX(1); }
+.tool-icon-home { font-size:2rem; margin-bottom:0.7rem; display:block; }
+.tool-name { font-family:'DM Serif Display',serif; font-size:1rem; color:var(--dark); margin-bottom:0.3rem; }
+.tool-desc-home { font-size:0.78rem; color:var(--muted); line-height:1.5; }
+.tool-tag { display:inline-block; font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; padding:0.15rem 0.5rem; border-radius:4px; margin-top:0.6rem; }
+.tag-fun   { background:#fff3cd; color:#8a6500; }
+.tag-share { background:#d1f0e8; color:var(--green); }
+.tag-art   { background:#ddeeff; color:var(--blue); }
+
+.tool-view {
+  display:none;
+  position:fixed; inset:0; top:60px;
+  background:var(--bg);
+  overflow:hidden;
+  z-index:50;
+  animation:slideIn 0.25s ease;
+  flex-direction:column;
+}
+.tool-view.active { display:flex; }
+@keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.tool-view-inner {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  max-width:620px;
+  width:100%;
+  margin:0 auto;
+  padding:0.8rem 1.2rem 1rem;
+  gap:0.75rem;
+  min-height:0;
+}
+
+.back-btn {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  color:var(--muted); font-size:0.82rem; font-weight:500;
+  cursor:pointer; padding:0.4rem 0; border:none; background:none; transition:color 0.2s;
+  flex-shrink:0;
+}
+.back-btn:hover { color:var(--dark); }
+
+.tool-header {
+  background:var(--dark); border-radius:var(--radius);
+  padding:1rem 1.4rem;
+  display:flex; align-items:center; gap:1rem;
+  flex-shrink:0;
+}
+.tool-header-icon { font-size:2rem; flex-shrink:0; }
+.tool-header h2 { font-family:'DM Serif Display',serif; font-size:1.3rem; color:#fff; line-height:1.2; }
+.tool-header p { font-size:0.8rem; color:#908d88; margin-top:0.2rem; }
+
+.input-panel {
+  background:var(--white); border:1px solid var(--line);
+  border-radius:var(--radius); padding:1.2rem 1.4rem; box-shadow:var(--shadow);
+  flex-shrink:0;
+}
+.input-label { font-size:0.75rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:0.6rem; }
+.name-input {
+  width:100%; background:var(--bg); border:2px solid var(--line);
+  color:var(--dark); font-family:'DM Serif Display',serif; font-size:1.25rem;
+  padding:0.6rem 0.9rem; border-radius:8px; outline:none; transition:all 0.2s; margin-bottom:0.8rem;
+}
+.name-input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.15); }
+.name-input::placeholder { color:#ccc9c3; font-family:'DM Sans',sans-serif; font-size:1rem; }
+
+.generate-btn {
+  width:100%; background:var(--dark); color:var(--gold);
+  border:none; padding:0.75rem 2rem; border-radius:8px;
+  font-family:'DM Sans',sans-serif; font-weight:700; font-size:0.88rem;
+  letter-spacing:0.08em; text-transform:uppercase; cursor:pointer;
+  transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:0.6rem;
+}
+.generate-btn:hover { background:var(--dark2); box-shadow:0 4px 20px rgba(26,24,20,0.25); transform:translateY(-1px); }
+.generate-btn:active { transform:translateY(0); }
+
+.result-panel {
+  background:var(--white); border:1px solid var(--line);
+  border-radius:var(--radius); overflow:hidden;
+  display:none; animation:slideIn 0.3s ease; box-shadow:var(--shadow);
+  flex:1; min-height:0; flex-direction:column;
+}
+.result-panel.show { display:flex; }
+.result-header {
+  background:var(--dark); padding:0.7rem 1.2rem;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0;
+}
+.result-header-label { font-size:0.7rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--gold); }
+.share-btn {
+  background:transparent; border:1px solid rgba(201,168,76,0.4); color:var(--gold);
+  padding:0.3rem 0.9rem; border-radius:6px; font-family:'DM Sans',sans-serif;
+  font-weight:600; font-size:0.75rem; cursor:pointer; transition:all 0.2s; letter-spacing:0.05em;
+}
+.share-btn:hover { background:var(--gold); color:var(--dark); }
+.result-body { padding:1.2rem 1.4rem; overflow-y:auto; flex:1; min-height:0; }
+.result-text { font-size:1rem; line-height:1.75; color:var(--ink); }
+.result-big { font-family:'DM Serif Display',serif; font-size:1.8rem; color:var(--dark); line-height:1.1; margin-bottom:0.4rem; }
+
+.certificate {
+  border:2px solid var(--gold); border-radius:10px; padding:2.2rem;
+  text-align:center; background:linear-gradient(145deg,#fffdf5,#f7f2e8); position:relative;
+}
+.cert-diamonds { color:var(--gold); font-size:0.6rem; letter-spacing:0.5em; display:block; margin-bottom:0.5rem; }
+.cert-sub { font-size:0.7rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--muted); margin-bottom:0.4rem; }
+.cert-name-big { font-family:'DM Serif Display',serif; font-size:2.4rem; color:var(--dark); line-height:1.1; margin:0.3rem 0 0.8rem; }
+.cert-body-text { font-size:0.9rem; color:var(--ink); line-height:1.7; max-width:380px; margin:0 auto; }
+.cert-seal { font-size:2.8rem; margin:0.8rem 0 0.3rem; display:block; }
+.cert-org { font-size:0.66rem; color:var(--muted); letter-spacing:0.15em; text-transform:uppercase; }
+
+#qr-canvas { display:block; margin:0.5rem auto 1rem; border:2px solid var(--line); border-radius:8px; }
+.download-btn {
+  display:block; width:fit-content; margin:0 auto;
+  background:var(--green); color:#fff; border:none; padding:0.6rem 1.6rem;
+  border-radius:8px; font-family:'DM Sans',sans-serif; font-weight:600; font-size:0.88rem; cursor:pointer; transition:all 0.2s;
+}
+.download-btn:hover { background:#145638; }
+
+.stars-row { display:flex; gap:0.25rem; margin-bottom:0.8rem; }
+.star-filled { color:var(--gold); font-size:1.1rem; }
+.star-empty  { color:var(--line); font-size:1.1rem; }
+
+.medieval-block { display:flex; gap:1.2rem; align-items:flex-start; margin-bottom:1rem; }
+.medieval-icon-big { font-size:3rem; flex-shrink:0; }
+.medieval-job-name { font-family:'DM Serif Display',serif; font-size:2rem; color:var(--dark); line-height:1.1; margin-bottom:0.3rem; }
+
+.color-swatches { display:flex; gap:0.6rem; flex-wrap:wrap; margin:0.8rem 0; }
+.swatch { width:56px; height:56px; border-radius:8px; display:flex; align-items:flex-end; padding:3px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+.swatch-label { font-size:0.5rem; color:rgba(255,255,255,0.9); font-weight:700; background:rgba(0,0,0,0.25); padding:2px 3px; border-radius:3px; width:100%; text-align:center; text-shadow:0 1px 2px rgba(0,0,0,0.5); }
+
+.mood-display { font-size:3rem; text-align:center; margin:0.3rem 0; display:block; }
+.mood-label { font-family:'DM Serif Display',serif; font-size:1.5rem; text-align:center; color:var(--dark); margin-bottom:0.4rem; }
+
+.meaning-origin { display:inline-block; background:var(--gold-light); color:var(--gold-dark); font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; padding:0.25rem 0.7rem; border-radius:4px; margin-bottom:0.8rem; }
+
+.lucky-num { font-family:'DM Serif Display',serif; font-size:4rem; color:var(--dark); text-align:center; line-height:1; margin:0.3rem 0; }
+.lucky-num-label { text-align:center; font-size:0.7rem; color:var(--muted); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:1rem; }
+.lucky-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-top:1rem; }
+.lucky-item { background:var(--bg); border-radius:8px; padding:0.8rem; text-align:center; }
+.lucky-item-label { font-size:0.66rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:0.3rem; }
+.lucky-item-val { font-family:'DM Serif Display',serif; font-size:1.1rem; color:var(--dark); }
+
+.name-initials-block { display:flex; flex-direction:column; gap:0.8rem; }
+.initial-row { display:flex; gap:0.8rem; align-items:flex-start; }
+.initial-letter { font-family:'DM Serif Display',serif; font-size:3.5rem; color:var(--gold); line-height:1; min-width:48px; }
+.initial-meaning { font-size:0.95rem; color:var(--ink); padding-top:0.5rem; }
+
+.planet-display { text-align:center; }
+.planet-icon { font-size:3rem; display:block; margin:0.2rem 0; }
+.planet-name { font-family:'DM Serif Display',serif; font-size:1.8rem; color:var(--dark); }
+.planet-trait { font-size:0.75rem; color:var(--gold-dark); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin:0.2rem 0 0.6rem; }
+
+.initial-letter { font-family:'DM Serif Display',serif; font-size:2.8rem; color:var(--gold); line-height:1; min-width:40px; }
+.initial-meaning { font-size:0.9rem; color:var(--ink); padding-top:0.4rem; }
+
+footer { background:var(--dark); color:#5a5752; text-align:center; padding:2rem; font-size:0.78rem; letter-spacing:0.05em; margin-top:2rem; }
+footer span { color:var(--gold); }
+
+@media(max-width:540px){
+  .tools-grid{grid-template-columns:1fr 1fr;}
+  .tool-header{flex-direction:row;text-align:left;gap:0.8rem;padding:0.8rem 1rem;}
+  .tool-header-icon{font-size:1.6rem;}
+  .tool-header h2{font-size:1.1rem;}
+  .tool-header p{font-size:0.72rem;}
+  .medieval-block{flex-direction:column;}
+  .lucky-grid{grid-template-columns:1fr 1fr;gap:0.5rem;}
+  .lucky-item{padding:0.5rem;}
+  .lucky-num{font-size:3rem;}
+  .hero h1{font-size:2rem;}
+  .initial-letter{font-size:2.2rem;min-width:34px;}
+  .tool-view-inner{padding:0.6rem 1rem 0.8rem;gap:0.5rem;}
+  .result-body{padding:0.8rem 1rem;}
+  .input-panel{padding:0.9rem 1rem;}
+  .name-input{font-size:1.1rem;padding:0.5rem 0.8rem;margin-bottom:0.6rem;}
+  .generate-btn{padding:0.6rem 1rem;font-size:0.82rem;}
+}
+/* ── Adsterra Ad Wrappers ── */
+.adsterra-banner-wrap {
+  max-width: 760px;
+  margin: 1.2rem auto;
+  padding: 0 1.5rem;
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.adsterra-native-wrap {
+  max-width: 760px;
+  margin: 0 auto 2rem;
+  padding: 0 1.5rem;
+}
+/* Social Bar is injected by Adsterra directly, no wrapper needed */
+</style>
+
+<!-- ═══════════════════════════════════════════════
+     ADSTERRA SOCIAL BAR AD
+     Paste your Adsterra Social Bar script here.
+     It loads a sticky floating bar automatically.
+     ═══════════════════════════════════════════════ -->
+<!-- PASTE YOUR ADSTERRA SOCIAL BAR SCRIPT HERE -->
+<!-- Example:
+<script type="text/javascript" src="//pl00000000.highperformanceformat.com/YOUR_SOCIAL_BAR_KEY/invoke.js"></script>
+-->
+<!-- END ADSTERRA SOCIAL BAR -->
+
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Name<span>Lab</span></div>
+  <div class="nav-tag">11 Free Tools</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">✦ 100% Free · No Sign Up Needed · Instant Results</div>
+  <h1>What Does Your <em>Name</em><br>Say About You?</h1>
+  <p>Fun tools to discover, laugh about, and share what's hidden in your name. Works for any name.</p>
+  <div class="hero-stats">
+    <div class="stat-item"><span class="stat-num">11</span><div class="stat-label">Fun Tools</div></div>
+    <div class="stat-item"><span class="stat-num">Free</span><div class="stat-label">Always</div></div>
+    <div class="stat-item"><span class="stat-num">1 sec</span><div class="stat-label">Instant Results</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     ADSTERRA BANNER AD
+     Replace the script below with your Adsterra
+     Banner ad code (728x90 desktop / 320x50 mobile)
+     ═══════════════════════════════════════════════ -->
+<div class="adsterra-banner-wrap">
+  <!-- PASTE YOUR ADSTERRA BANNER SCRIPT HERE -->
+  <script type="text/javascript">
+    // atOptions = { 'key': 'YOUR_BANNER_KEY', 'format': 'iframe', ... };
+    // document.write('<scr'+'ipt src="//www.highperformanceformat.com/YOUR_BANNER_KEY/invoke.js"></scr'+'ipt>');
+  </script>
+  <!-- END ADSTERRA BANNER -->
+</div>
+
+<div id="home-view">
+  <div class="section-wrap">
+    <h2>Pick a Tool Below</h2>
+    <p>Type your name into any tool and get your result in one second — no sign up needed</p>
+  </div>
+  <div class="tools-grid">
+    <div class="tool-card-home" onclick="openTool('roast')">
+      <span class="tool-icon-home">😂</span>
+      <div class="tool-name">Laugh at My Name</div>
+      <div class="tool-desc-home">Get a funny joke or tease based on your name. Great to share with friends.</div>
+      <span class="tool-tag tag-fun">Most Popular</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('cert')">
+      <span class="tool-icon-home">🏅</span>
+      <div class="tool-name">My Name Certificate</div>
+      <div class="tool-desc-home">Get a funny official-looking certificate made just for your name.</div>
+      <span class="tool-tag tag-share">Share-worthy</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('horoscope')">
+      <span class="tool-icon-home">🔮</span>
+      <div class="tool-name">My Name's Future</div>
+      <div class="tool-desc-home">See a funny star prediction for people who have your name.</div>
+      <span class="tool-tag tag-fun">Funny</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('medieval')">
+      <span class="tool-icon-home">⚔️</span>
+      <div class="tool-name">My Job 700 Years Ago</div>
+      <div class="tool-desc-home">What work would you have done in the old days based on your name?</div>
+      <span class="tool-tag tag-fun">Fun</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('qr')">
+      <span class="tool-icon-home">📱</span>
+      <div class="tool-name">Turn Name into QR Code</div>
+      <div class="tool-desc-home">Create a QR code from your name that anyone can scan or download.</div>
+      <span class="tool-tag tag-art">Creative</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('color')">
+      <span class="tool-icon-home">🎨</span>
+      <div class="tool-name">My Name's Colors</div>
+      <div class="tool-desc-home">Every name has a color palette. See the colors that belong to your name.</div>
+      <span class="tool-tag tag-art">Visual</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('mood')">
+      <span class="tool-icon-home">😊</span>
+      <div class="tool-name">My Name's Vibe</div>
+      <div class="tool-desc-home">What mood or personality do people sense when they hear your name?</div>
+      <span class="tool-tag tag-share">Shareable</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('meaning')">
+      <span class="tool-icon-home">📖</span>
+      <div class="tool-name">What My Name Means</div>
+      <div class="tool-desc-home">Discover the meaning, origin, and story behind your name.</div>
+      <span class="tool-tag tag-art">Informative</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('lucky')">
+      <span class="tool-icon-home">🍀</span>
+      <div class="tool-name">My Lucky Things</div>
+      <div class="tool-desc-home">Find your lucky number, color, day, animal, and more — from your name.</div>
+      <span class="tool-tag tag-share">Popular</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('initials')">
+      <span class="tool-icon-home">🔤</span>
+      <div class="tool-name">What Each Letter Means</div>
+      <div class="tool-desc-home">Every letter in your name carries a meaning. See what yours say about you.</div>
+      <span class="tool-tag tag-art">Deep</span>
+    </div>
+    <div class="tool-card-home" onclick="openTool('planet')">
+      <span class="tool-icon-home">🪐</span>
+      <div class="tool-name">My Name's Planet</div>
+      <div class="tool-desc-home">Which planet in the solar system matches the energy of your name?</div>
+      <span class="tool-tag tag-fun">Unique</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     ADSTERRA NATIVE BANNER AD
+     Replace the script below with your Adsterra
+     Native Banner ad code
+     ═══════════════════════════════════════════════ -->
+<div class="adsterra-native-wrap">
+  <!-- PASTE YOUR ADSTERRA NATIVE BANNER SCRIPT HERE -->
+  <script type="text/javascript">
+    // Adsterra Native Banner
+    // atOptions = { 'key': 'YOUR_NATIVE_KEY', 'format': 'native', ... };
+    // document.write('<scr'+'ipt src="//www.highperformanceformat.com/YOUR_NATIVE_KEY/invoke.js"></scr'+'ipt>');
+  </script>
+  <!-- END ADSTERRA NATIVE BANNER -->
+</div>
+<div class="tool-view" id="view-roast">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">😂</div>
+      <div><h2>Laugh at My Name</h2><p>Type any name and get a funny, playful joke. Don't take it personally!</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="roast-input" placeholder="Type any name here..." maxlength="30">
+      <button class="generate-btn" onclick="generateRoast()">😂 Show Me the Joke</button>
+    </div>
+    <div class="result-panel" id="roast-result">
+      <div class="result-header"><div class="result-header-label">Your Result</div><button class="share-btn" onclick="shareResult('roast')">↗ Share</button></div>
+      <div class="result-body"><div class="result-text" id="roast-text"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: CERTIFICATE -->
+<div class="tool-view" id="view-cert">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">🏅</div>
+      <div><h2>My Name Certificate</h2><p>Get a funny official certificate made just for your name.</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter your name</div>
+      <input class="name-input" id="cert-input" placeholder="Type your name here..." maxlength="30">
+      <button class="generate-btn" onclick="generateCert()">🏅 Create My Certificate</button>
+    </div>
+    <div class="result-panel" id="cert-result">
+      <div class="result-header"><div class="result-header-label">Your Official Certificate</div><button class="share-btn" onclick="shareResult('cert')">↗ Share</button></div>
+      <div class="result-body">
+        <div class="certificate">
+          <span class="cert-diamonds">◆ &nbsp; ◆ &nbsp; ◆</span>
+          <div class="cert-sub" id="cert-title-text"></div>
+          <div class="cert-name-big" id="cert-name-text"></div>
+          <div class="cert-body-text" id="cert-body-text"></div>
+          <span class="cert-seal" id="cert-seal">🏅</span>
+          <div class="cert-org">Issued by the International Bureau of Name Affairs · Est. 1842</div>
+          <span class="cert-diamonds">◆ &nbsp; ◆ &nbsp; ◆</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: HOROSCOPE -->
+<div class="tool-view" id="view-horoscope">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">🔮</div>
+      <div><h2>My Name's Future</h2><p>See what the stars predict for people who share your name.</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="horo-input" placeholder="Type any name here..." maxlength="30">
+      <button class="generate-btn" onclick="generateHoroscope()">🔮 Read My Future</button>
+    </div>
+    <div class="result-panel" id="horo-result">
+      <div class="result-header"><div class="result-header-label">Star Prediction</div><button class="share-btn" onclick="shareResult('horo')">↗ Share</button></div>
+      <div class="result-body">
+        <div class="stars-row" id="horo-stars"></div>
+        <div class="result-text" id="horo-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: MEDIEVAL -->
+<div class="tool-view" id="view-medieval">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">⚔️</div>
+      <div><h2>My Job 700 Years Ago</h2><p>What job would your name give you if you lived in the old times?</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="med-input" placeholder="Type any name here..." maxlength="30">
+      <button class="generate-btn" onclick="generateMedieval()">⚔️ Find My Old-Time Job</button>
+    </div>
+    <div class="result-panel" id="med-result">
+      <div class="result-header"><div class="result-header-label">Your Old-Time Destiny</div><button class="share-btn" onclick="shareResult('med')">↗ Share</button></div>
+      <div class="result-body">
+        <div class="medieval-block">
+          <div class="medieval-icon-big" id="med-icon"></div>
+          <div><div class="medieval-job-name" id="med-role"></div><div class="result-text" id="med-text"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: QR CODE -->
+<div class="tool-view" id="view-qr">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">📱</div>
+      <div><h2>Turn Name into QR Code</h2><p>Create a scannable QR code from any name. Save it or print it.</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="qr-input" placeholder="Type any name here..." maxlength="50">
+      <button class="generate-btn" onclick="generateQR()">📱 Create QR Code</button>
+    </div>
+    <div class="result-panel" id="qr-result">
+      <div class="result-header"><div class="result-header-label">Your QR Code</div><button class="share-btn" onclick="downloadQR()">⬇ Download</button></div>
+      <div class="result-body" style="text-align:center">
+        <canvas id="qr-canvas" width="180" height="180"></canvas>
+        <div style="font-size:0.85rem;color:var(--muted);margin-top:0.3rem" id="qr-label"></div>
+        <button class="download-btn" onclick="downloadQR()" style="margin-top:0.8rem">⬇ Save QR Code to My Device</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: COLOR -->
+<div class="tool-view" id="view-color">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">🎨</div>
+      <div><h2>My Name's Colors</h2><p>See the color palette that belongs to your name.</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="color-input" placeholder="Type any name here..." maxlength="30">
+      <button class="generate-btn" onclick="generateColor()">🎨 See My Name's Colors</button>
+    </div>
+    <div class="result-panel" id="color-result">
+      <div class="result-header"><div class="result-header-label">Name Color Palette</div><button class="share-btn" onclick="shareResult('color')">↗ Share</button></div>
+      <div class="result-body">
+        <div class="color-swatches" id="color-swatches"></div>
+        <div class="result-text" id="color-text" style="margin-top:0.8rem"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: MOOD -->
+<div class="tool-view" id="view-mood">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">😊</div>
+      <div><h2>My Name's Vibe</h2><p>What energy and personality does your name send to people when they hear it?</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="mood-input" placeholder="Type any name here..." maxlength="30">
+      <button class="generate-btn" onclick="generateMood()">😊 Read My Name's Vibe</button>
+    </div>
+    <div class="result-panel" id="mood-result">
+      <div class="result-header"><div class="result-header-label">Name Vibe Report</div><button class="share-btn" onclick="shareResult('mood')">↗ Share</button></div>
+      <div class="result-body">
+        <span class="mood-display" id="mood-emoji"></span>
+        <div class="mood-label" id="mood-title"></div>
+        <div class="result-text" id="mood-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: MEANING -->
+<div class="tool-view" id="view-meaning">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">📖</div>
+      <div><h2>What My Name Means</h2><p>Learn the meaning, origin, and story behind your name.</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="meaning-input" placeholder="Type any name here..." maxlength="30">
+      <button class="generate-btn" onclick="generateMeaning()">📖 Discover My Name's Meaning</button>
+    </div>
+    <div class="result-panel" id="meaning-result">
+      <div class="result-header"><div class="result-header-label">Name Analysis</div><button class="share-btn" onclick="shareResult('meaning')">↗ Share</button></div>
+      <div class="result-body">
+        <div class="meaning-origin" id="meaning-origin"></div>
+        <div class="result-big" id="meaning-name"></div>
+        <div class="result-text" id="meaning-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: LUCKY -->
+<div class="tool-view" id="view-lucky">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">🍀</div>
+      <div><h2>My Lucky Things</h2><p>Based on your name — your lucky number, color, day, animal, and more!</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="lucky-input" placeholder="Type any name here..." maxlength="30">
+      <button class="generate-btn" onclick="generateLucky()">🍀 Find My Lucky Things</button>
+    </div>
+    <div class="result-panel" id="lucky-result">
+      <div class="result-header"><div class="result-header-label">Lucky Profile</div><button class="share-btn" onclick="shareResult('lucky')">↗ Share</button></div>
+      <div class="result-body">
+        <div class="lucky-num" id="lucky-num"></div>
+        <div class="lucky-num-label">Lucky Number</div>
+        <div class="lucky-grid" id="lucky-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: INITIALS -->
+<div class="tool-view" id="view-initials">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">🔤</div>
+      <div><h2>What Each Letter Means</h2><p>Every letter in your name carries a special meaning. See yours!</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="initials-input" placeholder="Type any name here..." maxlength="20">
+      <button class="generate-btn" onclick="generateInitials()">🔤 Read Each Letter</button>
+    </div>
+    <div class="result-panel" id="initials-result">
+      <div class="result-header"><div class="result-header-label">Letter by Letter</div><button class="share-btn" onclick="shareResult('initials')">↗ Share</button></div>
+      <div class="result-body"><div class="name-initials-block" id="initials-text"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL: PLANET -->
+<div class="tool-view" id="view-planet">
+  <div class="tool-view-inner">
+    <button class="back-btn" onclick="goHome()">← Back to All Tools</button>
+    <div class="tool-header">
+      <div class="tool-header-icon">🪐</div>
+      <div><h2>My Name's Planet</h2><p>Which planet in the solar system matches the energy of your name?</p></div>
+    </div>
+    <div class="input-panel">
+      <div class="input-label">Enter a name</div>
+      <input class="name-input" id="planet-input" placeholder="Type any name here..." maxlength="30">
+      <button class="generate-btn" onclick="generatePlanet()">🪐 Find My Planet</button>
+    </div>
+    <div class="result-panel" id="planet-result">
+      <div class="result-header"><div class="result-header-label">Your Cosmic Match</div><button class="share-btn" onclick="shareResult('planet')">↗ Share</button></div>
+      <div class="result-body">
+        <div class="planet-display">
+          <span class="planet-icon" id="planet-icon"></span>
+          <div class="planet-name" id="planet-name"></div>
+          <div class="planet-trait" id="planet-trait"></div>
+        </div>
+        <div class="result-text" id="planet-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>© 2025 <span>NameLab</span> · Free Name Tools · For fun and entertainment · Share with your friends!</footer>
+
+<script>
+// ── NAVIGATION ──
+function openTool(id){
+  document.getElementById('home-view').style.display='none';
+  document.querySelectorAll('.tool-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.body.style.overflow='hidden';
+}
+function goHome(){
+  document.getElementById('home-view').style.display='block';
+  document.querySelectorAll('.tool-view').forEach(v=>v.classList.remove('active'));
+  document.body.style.overflow='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── UTILITIES ──
+function hash(str){let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))&0x7fffffff;return h;}
+function pick(arr,name,salt=0){return arr[hash(name+'|'+salt)%arr.length];}
+function cap(n){return n.charAt(0).toUpperCase()+n.slice(1).toLowerCase();}
+function check(id){const v=document.getElementById(id).value.trim();if(!v){alert('Please type a name first!');return null;}return v;}
+function show(id){document.getElementById(id).classList.add('show');}
+
+// ── 1. ROAST ──
+const roasts=[
+  n=>`People named ${n} always say "I'll be ready in 5 minutes" and then take 45 minutes. Scientists have confirmed this.`,
+  n=>`A ${n} once tried to cook instant noodles and burned the water. The noodles escaped. ${n} did not.`,
+  n=>`${n}s start a diet every Monday and quit by Monday lunch. They blame the weather. Every time.`,
+  n=>`Studies show ${n}s are 73% more likely to recommend a TV show they never actually finished.`,
+  n=>`If ${n} were a font, they'd be Comic Sans — everyone has an opinion, and half of them are wrong.`,
+  n=>`${n} gives life advice to everyone while having the same three personal problems since 2019.`,
+  n=>`People named ${n} can make any group photo slightly awkward just by being in it. A rare, powerful gift.`,
+  n=>`A ${n} will give you confident directions to a place they visited once — in a dream — in 2011.`,
+  n=>`${n} is like a phone on 2% battery: full of potential, but nobody trusts it to make it.`,
+  n=>`The name ${n} comes from an ancient word meaning "talks very loudly on the phone in quiet places."`,
+  n=>`Every ${n} owns at least four unfinished notebooks and has strong opinions about coffee they didn't pay for.`,
+  n=>`${n} will say "I'm almost ready" and then disappear for an undisclosed period of time.`,
+];
+const intros=["Alright, brace yourself —","The data is in, and it's not great —","After careful research into this name —","Our system wept. Then it said —","Science looked at your name and said —"];
+function generateRoast(){
+  const name=check('roast-input');if(!name)return;
+  const n=cap(name);
+  document.getElementById('roast-text').innerHTML=`<em style="color:var(--muted)">${pick(intros,name,7)}</em><br><br>${pick(roasts,name)(n)}`;
+  show('roast-result');
+}
+
+// ── 2. CERTIFICATE ──
+const certs=[
+  {t:"Certified Professional Overthinker",b:n=>`${n} has demonstrated an extraordinary ability to worry about things that have not happened yet and may never happen. This talent is officially recognized.`,s:"🧠"},
+  {t:"Grand Master of Selective Listening",b:n=>`${n} has shown exceptional skill in hearing only what they want to hear, successfully filtering out words like "deadline," "dishes," and "we need to talk."`,s:"👂"},
+  {t:"Distinguished Snack Expert",b:n=>`${n} is recognized for unmatched dedication to snacking at all hours, including the bold claim that food eaten after midnight does not count.`,s:"🥇"},
+  {t:"Supreme Commander of Procrastination",b:n=>`${n} has consistently delayed important tasks in favor of deeply unimportant activities, and has done so with remarkable commitment.`,s:"⏰"},
+  {t:"Official Expert of Unsolicited Opinions",b:n=>`${n} is recognized for the ability to have a strong take on any topic at any time before being asked. A truly rare gift.`,s:"📢"},
+  {t:"Certified Main Character",b:n=>`${n} has proven beyond any doubt that the universe revolves around them. All background characters have been informed.`,s:"⭐"},
+  {t:"Master of Saying I Don't Mind While Minding A Lot",b:n=>`${n} has perfected the art of expressing indifference while secretly having very, very strong preferences. Confusing, but impressive.`,s:"🎭"},
+  {t:"Professional Last-Minute Achiever",b:n=>`${n} has proven that the best work happens in the final 10 minutes before a deadline. This person creates their own pressure and thrives in it.`,s:"🏃"},
+];
+function generateCert(){
+  const name=check('cert-input');if(!name)return;
+  const n=cap(name);const c=pick(certs,name);
+  document.getElementById('cert-title-text').textContent=c.t;
+  document.getElementById('cert-name-text').textContent=n;
+  document.getElementById('cert-body-text').innerHTML=c.b(n);
+  document.getElementById('cert-seal').textContent=c.s;
+  show('cert-result');
+}
+
+// ── 3. HOROSCOPE ──
+const horoscopes=[
+  n=>`The alignment of Jupiter and your name suggests great things — specifically, finding a parking spot on the first try, at least twice this year. Mercury warns: avoid gas station food this week. Lucky color: the shade of beige that people always argue is actually cream.`,
+  n=>`${n}'s chart shows the rare "Almost Has It Together" formation. The Moon says drink more water. You won't. Venus is disappointed but supportive. Lucky number is 7 — but don't trust it. 7 has been unreliable since November.`,
+  n=>`The stars argued about ${n}'s reading for a long time. They argue constantly, which is relatable. Their verdict: avoid major decisions on days ending in Y. Spirit animal: a golden retriever who doesn't know why you're stressed but loves you anyway.`,
+  n=>`Saturn is in a phase that affects ${n}'s relationship with unread messages. The universe says: leave them. Mars confirms you are "almost ready" to start that project from two years ago. Almost.`,
+  n=>`The universe looked at ${n}'s chart and said "oh, THAT'S who this is." Neptune says this week is great for eating cereal late at night and calling it self-care. No judgment. Just astronomy.`,
+  n=>`${n}, the stars have been watching closely. They report your greatest strength is showing up. Your greatest weakness is showing up on time. A breakthrough is coming — it has been delayed three times, but this time it is real.`,
+];
+function generateHoroscope(){
+  const name=check('horo-input');if(!name)return;
+  const n=cap(name);
+  const stars=(hash(name)%3)+3;
+  let h='';for(let i=0;i<5;i++)h+=`<span class="${i<stars?'star-filled':'star-empty'}">★</span>`;
+  document.getElementById('horo-stars').innerHTML=h;
+  document.getElementById('horo-text').innerHTML=pick(horoscopes,name)(n);
+  show('horo-result');
+}
+
+// ── 4. MEDIEVAL ──
+const medJobs=[
+  {j:"Court Jester",i:"🃏",d:n=>`${n} would make the king laugh — usually by saying things that would get anyone else thrown in a dungeon. Dangerous work, but ${n} would have volunteered before being asked.`},
+  {j:"Royal Food Taster",i:"🍖",d:n=>`${n}'s entire job would be eating the king's food first to check for poison. Remarkably, ${n} would have asked for this job before being offered it.`},
+  {j:"Town Crier",i:"📣",d:n=>`${n} would walk the streets shouting announcements at full volume. Modern ${n} does the same thing, but through WhatsApp group chats.`},
+  {j:"Royal Scribe",i:"📜",d:n=>`${n} would copy books by hand for 14 hours a day, and would secretly draw little dragons in the margins when no one was watching.`},
+  {j:"Blacksmith",i:"⚒️",d:n=>`${n} would forge swords, armor, and horseshoes all day. ${n} would be the strongest person in the village, and everybody would know it.`},
+  {j:"Plague Doctor",i:"🎭",d:n=>`${n} would wear that famous bird mask and advise people to avoid "bad air." The medical advice would not help much, but the look would be iconic.`},
+  {j:"Court Wizard",i:"🧙",d:n=>`${n} would claim to know magic. Whether they actually did is debated. They definitely had the most impressive robe in every room.`},
+  {j:"Knight",i:"⚔️",d:n=>`${n} would charge into battle shouting something brave. History records that ${n} was absolutely terrified but committed to not showing it.`},
+  {j:"Traveling Bard",i:"🎵",d:n=>`${n} would travel town to town singing about other people's drama. The medieval version of a podcast, but louder, and with a lute.`},
+  {j:"Tax Collector",i:"💰",d:n=>`${n} would be the most feared person in the village. Not because of strength, but because they showed up every spring with a clipboard and a disappointed expression.`},
+  {j:"Royal Gardener",i:"🌿",d:n=>`${n} would tend the castle gardens and have very strong opinions about where each flower belongs. Feedback was not welcome.`},
+];
+function generateMedieval(){
+  const name=check('med-input');if(!name)return;
+  const n=cap(name);const j=pick(medJobs,name);
+  document.getElementById('med-icon').textContent=j.i;
+  document.getElementById('med-role').textContent=j.j;
+  document.getElementById('med-text').innerHTML=j.d(n);
+  show('med-result');
+}
+
+// ── 5. QR ──
+function generateQR(){
+  const name=check('qr-input');if(!name)return;
+  drawQR(name);
+  document.getElementById('qr-label').textContent=`QR Code for: "${name}"`;
+  show('qr-result');
+}
+function drawQR(text){
+  const canvas=document.getElementById('qr-canvas');
+  const ctx=canvas.getContext('2d');
+  const size=220,m=21,cs=size/m;
+  canvas.width=size;canvas.height=size;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
+  const used=new Set();
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)used.add(r+','+c);
+  for(let r=0;r<9;r++)for(let c=13;c<21;c++)used.add(r+','+c);
+  for(let r=13;r<21;r++)for(let c=0;c<9;c++)used.add(r+','+c);
+  const df=(x,y)=>{
+    ctx.fillStyle='#1a1814';ctx.fillRect(x*cs,y*cs,7*cs,7*cs);
+    ctx.fillStyle='#fff';ctx.fillRect((x+1)*cs,(y+1)*cs,5*cs,5*cs);
+    ctx.fillStyle='#1a1814';ctx.fillRect((x+2)*cs,(y+2)*cs,3*cs,3*cs);
+  };
+  df(0,0);df(14,0);df(0,14);
+  ctx.fillStyle='#1a1814';
+  for(let r=0;r<m;r++)for(let c=0;c<m;c++){
+    if(used.has(r+','+c))continue;
+    if(hash(text+r*97+c)%2===0)ctx.fillRect(c*cs,r*cs,cs,cs);
+  }
+}
+function downloadQR(){
+  const name=document.getElementById('qr-input').value.trim()||'name';
+  const a=document.createElement('a');
+  a.download='namelab-qr-'+name+'.png';
+  a.href=document.getElementById('qr-canvas').toDataURL();
+  a.click();
+}
+
+// ── 6. COLOR ──
+const palettes=[
+  {n:"Warm Sunset",c:["#E8735A","#F0A500","#F7D060","#C94B4B"],d:n=>`The name ${n} carries warm, energetic colors — like a beautiful sunset. It draws attention and leaves a lasting impression.`},
+  {n:"Ocean Calm",c:["#1A4F6E","#2980B9","#5DADE2","#AED6F1"],d:n=>`${n} has deep, calm energy — like the ocean. Trustworthy, clear, and steady.`},
+  {n:"Forest Green",c:["#1E6E4A","#27AE60","#82E0AA","#D5F5E3"],d:n=>`${n} carries the color of growth and life. Fresh, honest, and grounded — a name that grows on people.`},
+  {n:"Royal Gold",c:["#7D6608","#C9A84C","#F9E79F","#FFFDE7"],d:n=>`${n} is a name with class and dignity. Gold names are remembered, respected, and never forgotten.`},
+  {n:"Rose & Passion",c:["#C0392B","#E91E63","#F48FB1","#FCE4EC"],d:n=>`${n} has bold, passionate colors. This is a name people feel, not just hear.`},
+  {n:"Midnight Blue",c:["#0D1B2A","#1B3A5C","#2E86C1","#AED6F1"],d:n=>`${n} has deep, powerful energy — cool, calm, and quietly in charge.`},
+  {n:"Earth & Spice",c:["#6E2C0E","#A04000","#D35400","#F0B27A"],d:n=>`${n} is grounded and strong. An earthy name belongs to people who are real, warm, and dependable.`},
+];
+function generateColor(){
+  const name=check('color-input');if(!name)return;
+  const n=cap(name);const p=pick(palettes,name);
+  document.getElementById('color-swatches').innerHTML=p.c.map(c=>`<div class="swatch" style="background:${c}"><span class="swatch-label">${c}</span></div>`).join('');
+  document.getElementById('color-text').innerHTML=`<strong style="color:var(--gold-dark)">${p.n}</strong> — ${p.d(n)}`;
+  show('color-result');
+}
+
+// ── 7. MOOD ──
+const moods=[
+  {e:"⚡",t:"Electric & Exciting",d:n=>`The name ${n} gives off strong, exciting energy. People feel alert and curious when they hear it. ${n}s bring energy into every room — sometimes more than people asked for, but always appreciated.`},
+  {e:"🌿",t:"Calm & Trustworthy",d:n=>`${n} sounds honest and easy to trust. People named ${n} are the ones others go to for advice and comfort. The name itself feels like a deep breath.`},
+  {e:"🔥",t:"Bold & Confident",d:n=>`${n} is a name that doesn't apologize for itself. Bold and direct. People hear it and immediately expect strong opinions — and they are usually right.`},
+  {e:"🎵",t:"Creative & Playful",d:n=>`There's music in the name ${n}. It flows naturally. People with this name are seen as creative and artistic — or at least very good at making things look easy.`},
+  {e:"🌊",t:"Relaxed & Easygoing",d:n=>`${n} flows easily and carries chill, steady energy. People named ${n} rarely panic — or at least look like they don't, which is basically the same thing.`},
+  {e:"🌟",t:"Bright & Unforgettable",d:n=>`${n} is the kind of name people remember after hearing it just once. Whether in a crowd or a list, ${n} always stands out.`},
+  {e:"🍂",t:"Warm & Friendly",d:n=>`The name ${n} feels like a warm hug. It makes people feel comfortable and welcome right away. ${n}s are usually the ones making sure no one is left out.`},
+];
+function generateMood(){
+  const name=check('mood-input');if(!name)return;
+  const n=cap(name);const m=pick(moods,name);
+  document.getElementById('mood-emoji').textContent=m.e;
+  document.getElementById('mood-title').textContent=m.t;
+  document.getElementById('mood-text').innerHTML=m.d(n);
+  show('mood-result');
+}
+
+// ── 8. MEANING ──
+const meanings=[
+  {o:"Latin & Roman",m:n=>`The name ${n} has ancient Latin roots, connected to strength and leadership. In old Roman tradition, names like ${n} were given to people expected to carry the family forward. People with this name are often natural leaders who prefer to act rather than wait.`},
+  {o:"Old English",m:n=>`${n} traces back to Old English, where names were tied to land, community, and belonging. People named ${n} have always been seen as trustworthy, practical, and deeply connected to those around them.`},
+  {o:"African Origins",m:n=>`The name ${n} has deep roots in African naming traditions, where names carry spiritual weight and intention. This name is associated with purpose, vision, and a life that means something to others.`},
+  {o:"Hebrew & Biblical",m:n=>`${n} has ancient Hebrew roots and appears in traditions that value wisdom, faith, and courage. These names were not chosen lightly — they were seen as a kind of promise for the person who would carry them.`},
+  {o:"Greek Origins",m:n=>`The name ${n} shares roots with ancient Greek tradition — names given to people based on qualities they were meant to embody. This name suggests clarity of mind and a natural ability to connect with others.`},
+  {o:"Celtic & Irish",m:n=>`${n} has Celtic origins, tied to fire, storytelling, and the natural world. Celtic names carried the energy of the land — wild, free, and impossible to fully contain.`},
+  {o:"Arabic & Islamic",m:n=>`The name ${n} resonates with Arabic naming traditions, where names carry meaning about character and destiny. This name is associated with light, generosity, and a peace that others can feel just by being near you.`},
+];
+function generateMeaning(){
+  const name=check('meaning-input');if(!name)return;
+  const n=cap(name);const m=pick(meanings,name);
+  document.getElementById('meaning-origin').textContent=m.o;
+  document.getElementById('meaning-name').textContent=n;
+  document.getElementById('meaning-text').innerHTML=m.m(n);
+  show('meaning-result');
+}
+
+// ── 9. LUCKY ──
+const lColors=["Gold","Emerald Green","Royal Blue","Crimson Red","Silver","Deep Purple","Coral","Teal","Amber","Ivory White"];
+const lDays=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const lStones=["Jade","Amethyst","Rose Quartz","Obsidian","Tiger's Eye","Lapis Lazuli","Citrine","Moonstone","Ruby","Sapphire"];
+const lAnimals=["Lion","Elephant","Eagle","Dolphin","Owl","Fox","Wolf","Butterfly","Horse","Turtle"];
+const lFoods=["Mango","Dark Chocolate","Rice & Stew","Grilled Fish","Honey","Coconut","Avocado","Plantain","Orange","Pineapple"];
+const lTraits=["Wisdom","Courage","Kindness","Creativity","Resilience","Honesty","Loyalty","Humor","Patience","Vision"];
+function generateLucky(){
+  const name=check('lucky-input');if(!name)return;
+  const lNum=(hash(name)%9)+1;
+  document.getElementById('lucky-num').textContent=lNum;
+  document.getElementById('lucky-grid').innerHTML=`
+    <div class="lucky-item"><div class="lucky-item-label">🎨 Lucky Color</div><div class="lucky-item-val">${pick(lColors,name,1)}</div></div>
+    <div class="lucky-item"><div class="lucky-item-label">📅 Lucky Day</div><div class="lucky-item-val">${pick(lDays,name,2)}</div></div>
+    <div class="lucky-item"><div class="lucky-item-label">💎 Lucky Stone</div><div class="lucky-item-val">${pick(lStones,name,3)}</div></div>
+    <div class="lucky-item"><div class="lucky-item-label">🐾 Spirit Animal</div><div class="lucky-item-val">${pick(lAnimals,name,4)}</div></div>
+    <div class="lucky-item"><div class="lucky-item-label">🍽️ Lucky Food</div><div class="lucky-item-val">${pick(lFoods,name,5)}</div></div>
+    <div class="lucky-item"><div class="lucky-item-label">✨ Power Trait</div><div class="lucky-item-val">${pick(lTraits,name,9)}</div></div>
+  `;
+  show('lucky-result');
+}
+
+// ── 10. INITIALS ──
+const letterMeanings={
+  A:"A stands for Ambition. This letter belongs to people who set goals and go after them — even if it takes longer than expected.",
+  B:"B stands for Balance. People with B in their name are often peacemakers who keep things steady around them.",
+  C:"C stands for Creativity. This letter is connected to artistic thinking, fresh ideas, and seeing the world differently.",
+  D:"D stands for Determination. D carries the energy of someone who doesn't quit, even when things get difficult.",
+  E:"E stands for Energy. This is a letter of movement, enthusiasm, and the kind of person who lights up a room.",
+  F:"F stands for Faithfulness. F in a name suggests loyalty — someone who keeps their word and their relationships.",
+  G:"G stands for Generosity. G is the letter of giving — time, attention, and kindness, often without being asked.",
+  H:"H stands for Heart. People with H in their name tend to feel things deeply and care genuinely about others.",
+  I:"I stands for Intuition. This letter belongs to people who often just know things before they can explain why.",
+  J:"J stands for Joy. J is one of the most positive letters — connected to laughter, happiness, and good energy.",
+  K:"K stands for Knowledge. K carries the energy of someone who is always learning and always asking questions.",
+  L:"L stands for Love. This letter is connected to warmth, affection, and the deep need to connect with others.",
+  M:"M stands for Motivation. M in a name often belongs to people who inspire others simply by doing their own thing.",
+  N:"N stands for Nurturing. N is the letter of caregivers — people who look after others and rarely ask for credit.",
+  O:"O stands for Openness. O belongs to people who welcome new ideas, new people, and new experiences.",
+  P:"P stands for Patience. This is a letter of calm — someone who waits, observes, and acts at the right moment.",
+  Q:"Q stands for Quality. People with Q in their name rarely settle — they want the best, and they usually get it.",
+  R:"R stands for Resilience. R is the letter of people who have been through difficulty and come out stronger.",
+  S:"S stands for Strength. Not always physical — often the quiet, unshakeable inner kind that people rely on.",
+  T:"T stands for Truth. T belongs to honest, direct people who say what they mean and mean what they say.",
+  U:"U stands for Understanding. U is the letter of empathy — someone who listens first and judges last.",
+  V:"V stands for Vision. V belongs to people who can see possibilities that others miss — the dreamers and builders.",
+  W:"W stands for Wisdom. W carries the weight of experience and the ability to share what's been learned.",
+  X:"X stands for Extraordinary. X in a name is rare, and so are the people who carry it. They defy easy description.",
+  Y:"Y stands for Yearning. Y belongs to people who always want more — more experience, more growth, more meaning.",
+  Z:"Z stands for Zeal. Z is the energy of pure enthusiasm — someone who commits fully to whatever they care about.",
+};
+function generateInitials(){
+  const name=check('initials-input');if(!name)return;
+  const letters=[...name.toUpperCase()].filter(c=>/[A-Z]/.test(c));
+  const unique=[];const seen=new Set();
+  letters.forEach(l=>{if(!seen.has(l)){seen.add(l);unique.push(l);}});
+  document.getElementById('initials-text').innerHTML=unique.map(l=>`
+    <div class="initial-row">
+      <div class="initial-letter">${l}</div>
+      <div class="initial-meaning">${letterMeanings[l]||`${l} is a rare and powerful letter — one that makes a name stand out and be remembered.`}</div>
+    </div>
+  `).join('');
+  show('initials-result');
+}
+
+// ── 11. PLANET ──
+const planets=[
+  {i:"☀️",n:"The Sun",t:"Radiant · Powerful · Central",d:n=>`${n} matches the energy of the Sun. Like the Sun, this name is hard to ignore. It radiates warmth and confidence, and everything around it naturally moves toward it.`},
+  {i:"🌙",n:"The Moon",t:"Intuitive · Emotional · Deep",d:n=>`${n} resonates with the Moon's quiet power. This name belongs to someone who feels everything deeply, reads people well, and has a hidden strength that surprises others.`},
+  {i:"♂️",n:"Mars",t:"Bold · Driven · Fearless",d:n=>`${n} carries the energy of Mars — the planet of action and courage. People with this name rarely wait for things to happen. They make things happen.`},
+  {i:"♀️",n:"Venus",t:"Beautiful · Loving · Magnetic",d:n=>`${n} flows with the energy of Venus — beauty, warmth, and the ability to attract people naturally. This name belongs to someone who makes life feel more beautiful for everyone around them.`},
+  {i:"♃",n:"Jupiter",t:"Wise · Lucky · Expansive",d:n=>`${n} aligns with Jupiter — the planet of growth, luck, and wisdom. Big energy. Big ideas. Big heart. People named ${n} tend to grow wherever they are planted.`},
+  {i:"♄",n:"Saturn",t:"Disciplined · Serious · Enduring",d:n=>`${n} matches Saturn — the planet of hard work and lasting results. This name belongs to someone who builds things that last: relationships, businesses, legacies.`},
+  {i:"♅",n:"Uranus",t:"Original · Unexpected · Free",d:n=>`${n} resonates with Uranus — the planet of originality and surprise. People with this name rarely do things the way everyone else does. That is their greatest strength.`},
+  {i:"♆",n:"Neptune",t:"Creative · Mystical · Dreamy",d:n=>`${n} flows with Neptune — the planet of imagination and mystery. This name belongs to a creative soul who lives partly in their own inner world, which is richer than most people's outer world.`},
+  {i:"🪐",n:"Saturn's Rings",t:"Complex · Multi-layered · Striking",d:n=>`${n} is like Saturn's rings — visually unforgettable and more complex than it looks at first. There are layers to this name and the person who carries it.`},
+];
+function generatePlanet(){
+  const name=check('planet-input');if(!name)return;
+  const n=cap(name);const p=pick(planets,name);
+  document.getElementById('planet-icon').textContent=p.i;
+  document.getElementById('planet-name').textContent=p.n;
+  document.getElementById('planet-trait').textContent=p.t;
+  document.getElementById('planet-text').innerHTML=p.d(n);
+  show('planet-result');
+}
+
+// ── SHARE ──
+const shareMsgs={
+  roast:"I just got hilariously roasted by my own name 😂 Try yours free →",
+  cert:"I just received an official funny certificate in my name 🏅 Get yours →",
+  horo:"The stars have a very specific prediction about my name 🔮 Check yours →",
+  med:"I found out my job from 700 years ago based on my name ⚔️ Find yours →",
+  color:"I just saw the color palette of my name 🎨 See yours →",
+  mood:"This is the vibe my name sends to people 😊 Check yours →",
+  meaning:"I just discovered what my name really means 📖 Discover yours →",
+  lucky:"I found all my lucky things from my name 🍀 Find yours →",
+  initials:"I just found out what every letter in my name means 🔤 See yours →",
+  planet:"I found which planet matches my name's energy 🪐 Find yours →",
+};
+function shareResult(type){
+  const msg=(shareMsgs[type]||"Try NameLab free!")+' '+window.location.href;
+  if(navigator.share){navigator.share({title:'NameLab',text:msg,url:window.location.href});}
+  else{navigator.clipboard.writeText(msg).then(()=>alert('✓ Copied to clipboard! Share it anywhere.')).catch(()=>alert('Copy this link to share:\n'+window.location.href));}
+}
+
+// Enter key support
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  const v=document.querySelector('.tool-view.active');
+  if(!v)return;
+  const btn=v.querySelector('.generate-btn');
+  if(btn)btn.click();
+});
+</script>
+</body>
+</html>
